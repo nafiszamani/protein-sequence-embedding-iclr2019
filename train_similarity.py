@@ -3,6 +3,7 @@ from __future__ import print_function,division
 import numpy as np
 import pandas as pd
 import sys
+import random
 
 from scipy.stats import pearsonr, spearmanr
 
@@ -57,6 +58,8 @@ def main():
     parser.add_argument('--save-prefix', help='path prefix for saving models')
     parser.add_argument('-d', '--device', type=int, default=-2, help='compute device to use')
 
+    parser.add_argument('--sample-percentage', type=float, default=0.05, help='Sample Percentage (default: 0.05)')
+
     args = parser.parse_args()
 
 
@@ -103,6 +106,25 @@ def main():
 
     dataset_test = PairedDataset(x0_test, x1_test, y_test)
     print('# loaded', len(x0_test), 'test pairs', file=sys.stderr)
+
+    
+    # Sample a percentage of the dataset
+    percentage_to_keep = args.sample_percentage  # Adjust this value to your desired percentage
+
+    # For training dataset
+    sampled_indices_train = random.sample(range(len(x_train)), int(percentage_to_keep * len(x_train)))
+    x_train = [x_train[i] for i in sampled_indices_train]
+    y_train = y_train[sampled_indices_train]
+
+    # For test dataset
+    sampled_indices_test = random.sample(range(len(x0_test)), int(percentage_to_keep * len(x0_test)))
+    x0_test = [x0_test[i] for i in sampled_indices_test]
+    x1_test = [x1_test[i] for i in sampled_indices_test]
+    y_test = y_test[sampled_indices_test]
+
+    # Update dataset size information
+    print('# Sampled', len(x_train), 'training sequences', file=sys.stderr)
+    print('# Sampled', len(x0_test), 'test pairs', file=sys.stderr)
 
     ## make the dataset iterators
     scale = args.epoch_scale
